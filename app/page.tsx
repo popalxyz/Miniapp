@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +9,7 @@ import { TokenSearch } from "@/components/token-search"
 import { WatchlistView } from "@/components/watchlist-view"
 import { AlertsView } from "@/components/alerts-view"
 import { cn } from "@/lib/utils"
+import { sdk } from "@farcaster/mini";
 
 // Mock Farcaster auth - in real implementation, use @farcaster/auth-kit
 interface User {
@@ -31,19 +32,28 @@ export default function TokenTracker() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    // Mock user data
-    setUser({
-      fid: 12345,
-      username: "cryptotrader",
-      displayName: "Crypto Trader",
-      pfpUrl: "/diverse-user-avatars.png",
-    })
-    setIsLoading(false)
-  }
+const frameUser = sdk?.user;
+
+if (frameUser) {
+  setUser({
+    fid: frameUser.fid,
+    username: frameUser.username,
+    displayName: frameUser.displayName || frameUser.username,
+    pfpUrl: frameUser.pfpUrl || "/default-avatar.png",
+  });
+} else {
+  console.warn("No Farcaster user found");
+}
+setIsLoading(false);
 
   const handleLogout = () => {
     setUser(null)
   }
+  useEffect(() => {
+  if (typeof window !== "undefined") {
+    sdk.actions.ready();
+  }
+}, []);
 
   if (!user) {
     return (
